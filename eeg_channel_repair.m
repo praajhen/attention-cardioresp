@@ -20,7 +20,7 @@ data_folder = 'path_to_raw_edf_files/';
 dataset_files = dir(fullfile(data_folder, '*.edf'));
 
 %% --------------------- Select the file to process ----------------------
-file_idx = 47;  % Select EDF file by index (adjust as needed)
+file_idx = 1;  % Select EDF file by index (adjust as needed)
 
 dataset_filename = fullfile(data_folder, dataset_files(file_idx).name);
 
