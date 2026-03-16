@@ -5,11 +5,11 @@
 close all;
 clear; clc;
 
-addpath('PATH_TO_FIELDTRIP_FOLDER');              % e.g. C:\...\fieldtrip-20230427
+addpath('PATH_TO_FIELDTRIP_FOLDER');              
 ft_defaults;
 
-data_folder = 'PATH_TO_ECG_DATA_FOLDER';          % e.g. D:\AICR (2023-24)\Data\
-save_folder = 'PATH_TO_SAVE_CARDIAC_PHASE_FIGS';  % e.g. C:\...\figures\cardiac_phase
+data_folder = 'PATH_TO_ECG_DATA_FOLDER';          
+save_folder = 'PATH_TO_SAVE_CARDIAC_PHASE_FIGS';  
 if ~exist(save_folder, 'dir'); mkdir(save_folder); end
 
 % Load your subject-specific phase boundaries
