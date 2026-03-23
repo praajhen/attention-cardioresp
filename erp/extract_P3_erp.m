@@ -1,142 +1,143 @@
-%% run_erp_pipeline.m
+%% extract_P3_erp.m
 % ERP extraction and trial segmentation script
 % Author: praghajieeth raajhen santhana gopalan
 
 clear; clc;
 
-%% ------------------------------------------------------------------------
-%  ADD REQUIRED PATHS (replace with your own paths when running)
-% -------------------------------------------------------------------------
-addpath('PATH_TO_YOUR_CODE_FOLDER');          % e.g., ...\Matlab code
-addpath('PATH_TO_FIELDTRIP_FOLDER');          % e.g., ...\fieldtrip
-ft_defaults;
+%% ================= USER PATHS =================
+code_path        = 'PATH_TO_YOUR_CODE_FOLDER';
+fieldtrip_path   = 'PATH_TO_FIELDTRIP_FOLDER';
 
-%% ------------------------------------------------------------------------
-%  DEFINE DATA FOLDERS (user must fill in)
-% -------------------------------------------------------------------------
-data_folder     = 'PATH_TO_RAW_DATA_FOLDER';      % contains *.edf files
-filtered_folder = 'PATH_TO_FILTERED_DATA_FOLDER'; % contains filtered *.mat files
+data_folder      = 'PATH_TO_RAW_DATA_FOLDER';
+filtered_folder  = 'PATH_TO_FILTERED_DATA_FOLDER';
 
-dataset_files   = dir(fullfile(data_folder, '*.edf'));
-filtered_files  = dir(fullfile(filtered_folder, '*.mat'));
+trialfun_path    = 'PATH_TO_TRIAL_FUNCTION_FOLDER';
 
-%% ------------------------------------------------------------------------
-% Loop through subjects
-% -------------------------------------------------------------------------
-for file_idx = 1:50
+trials_cong_folder  = 'PATH_TO_SAVE_TRIALS_CONGRUENT';
+trials_incon_folder = 'PATH_TO_SAVE_TRIALS_INCONGRUENT';
 
-    dataset_filename  = fullfile(data_folder, dataset_files(file_idx).name);
-    filtered_filename = fullfile(filtered_folder, filtered_files(file_idx).name);
+erp_cong_folder     = 'PATH_TO_SAVE_ERP_CONGRUENT';
+erp_incon_folder    = 'PATH_TO_SAVE_ERP_INCONGRUENT';
 
-    load(filtered_filename); % loads data_filtered
+%% ================= SETUP =================
+addpath(code_path)
+addpath(fieldtrip_path)
+addpath(trialfun_path)
 
-    cd('PATH_TO_TRIAL_FUNCTION_FOLDER'); % folder where erp_1500ms.m exists
+ft_defaults
 
-    %% Loop through conditions 3–4 (congruent / incongruent)
-    for i = 3:4
+dataset_files  = dir(fullfile(data_folder,'*.edf'));
+filtered_files = dir(fullfile(filtered_folder,'*.mat'));
 
-        %% ---------------- Define trials ----------------
-        cfg = [];
-        cfg.dataset = dataset_filename;
-        cfg.nr      = i;  % 3 = congruent, 4 = incongruent
-        cfg.trialfun = 'erp_1500ms';
-        cfg.trialdef.eventtype = 'annotation';
+num_subjects = length(dataset_files);
 
-        % Use channels 1–128
-        cfg.channel = arrayfun(@num2str, 1:128, 'UniformOutput', false);
+%% ================= LOOP SUBJECTS =================
+for file_idx = 1:num_subjects
 
-        cfg.baselinewindow = [-0.2 0];
-        cfg.demean = 'yes';
+dataset_filename  = fullfile(data_folder,dataset_files(file_idx).name);
+filtered_filename = fullfile(filtered_folder,filtered_files(file_idx).name);
 
-        cfg = ft_definetrial(cfg);
-        data = ft_redefinetrial(cfg, data_filtered);
-        erp  = ft_preprocessing(cfg, data);
+load(filtered_filename) % loads data_filtered
 
-        trial_no_b4(file_idx) = length(erp.trial);
+%% ================= CONDITIONS =================
+for cond = 3:4
 
-        %% ---------------- Amplitude thresholding ----------------
-        numTrials = length(erp.trial);
-        difftrial = cell(1, numTrials);
-        btrial    = cell(1, numTrials);
-        clean_trials = [];
-        reject_trial = false(1, numTrials);
+%% ---------------- Define trials ----------------
+cfg = [];
+cfg.dataset = dataset_filename;
+cfg.nr      = cond;
+cfg.trialfun = 'erp_1500ms';
+cfg.trialdef.eventtype = 'annotation';
 
-        threshold_low  = 175;
-        threshold_high = 300;
-        max_zero_columns = 25;
+cfg.channel = arrayfun(@num2str,1:128,'UniformOutput',false);
+cfg.baselinewindow = [-0.2 0];
+cfg.demean = 'yes';
 
-        for tr = 1:numTrials
-            difftrial{tr} = max(erp.trial{tr}(:, 150:end), [], 2) - ...
-                            min(erp.trial{tr}(:, 150:end), [], 2);
-        end
+cfg  = ft_definetrial(cfg);
+data = ft_redefinetrial(cfg,data_filtered);
+erp  = ft_preprocessing(cfg,data);
 
-        for tr = 1:numTrials
-            if any(difftrial{tr} > threshold_high)
-                reject_trial(tr) = true;
-            else
-                btrial{tr} = difftrial{tr} <= threshold_low;
-                zeroCount = sum(btrial{tr} == 0);
-                reject_trial(tr) = (zeroCount > max_zero_columns);
-            end
-        end
+%% ---------------- Trial rejection ----------------
+numTrials = length(erp.trial);
 
-        clean_trials = find(~reject_trial);
-        trial_no_after(file_idx) = length(clean_trials);
+threshold_low  = 175;
+threshold_high = 300;
+max_zero_columns = 25;
 
-        erp.sampleinfo = erp.sampleinfo(clean_trials, :);
-        erp.trial      = erp.trial(:, clean_trials);
-        erp.time       = erp.time(:, clean_trials);
+reject_trial = false(1,numTrials);
 
-        %% ---------------- Average reference ----------------
-        cfg = [];
-        cfg.reref = 'yes';
-        cfg.refmethod = 'avg';
-        cfg.refchannel = 'all';
-        erp_trials = ft_preprocessing(cfg, erp);
+for tr = 1:numTrials
 
-        %% ---------------- Extract trials per electrode ----------------
-        trials = cell(128, 1);
+difftrial = max(erp.trial{tr}(:,150:end),[],2) - ...
+            min(erp.trial{tr}(:,150:end),[],2);
 
-        for electrode_idx = 1:128
-            electrode_trials = [];
+if any(difftrial > threshold_high)
+    reject_trial(tr) = true;
+else
+    zeroCount = sum(difftrial > threshold_low);
+    if zeroCount > max_zero_columns
+        reject_trial(tr) = true;
+    end
+end
 
-            for trial_idx = 1:length(erp_trials.trial)
-                trial_data = erp_trials.trial{trial_idx}(electrode_idx, :);
-                electrode_trials = [electrode_trials; trial_data];
-            end
+end
 
-            trials{electrode_idx} = electrode_trials;
-        end
+clean_trials = find(~reject_trial);
 
-        %% ---------------- Target start times ----------------
-        [target_start_time] = target_start_times_inhibition(dataset_filename, i, erp_trials);
+erp.sampleinfo = erp.sampleinfo(clean_trials,:);
+erp.trial      = erp.trial(clean_trials);
+erp.time       = erp.time(clean_trials);
 
-        %% ---------------- SAVE TRIALS PER CONDITION ----------------
-        [~, base_filename, ~] = fileparts(dataset_files(file_idx).name);
+%% ---------------- Rereference ----------------
+cfg = [];
+cfg.reref = 'yes';
+cfg.refmethod = 'avg';
+cfg.refchannel = 'all';
 
-        if i == 3
-            trials_folder = 'PATH_TO_SAVE_TRIALS_CONGRUENT';
-        else
-            trials_folder = 'PATH_TO_SAVE_TRIALS_INCONGRUENT';
-        end
+erp_trials = ft_preprocessing(cfg,erp);
 
-        save(fullfile(trials_folder, [base_filename '.mat']), ...
-             'trials', 'target_start_time');
+%% ---------------- Extract trials ----------------
+trials = cell(128,1);
 
-        %% ---------------- Compute ERP average ----------------
-        cfg = [];
-        ga_erp = ft_timelockanalysis(cfg, erp_trials);
+for e = 1:128
 
-        %% ---------------- Save ERP ----------------
-        if i == 3
-            erp_folder = 'PATH_TO_SAVE_ERP_CONGRUENT';
-        else
-            erp_folder = 'PATH_TO_SAVE_ERP_INCONGRUENT';
-        end
+tmp = [];
 
-        eval([base_filename ' = ga_erp;']);
-        save(fullfile(erp_folder, [base_filename '.mat']), base_filename);
+for t = 1:length(erp_trials.trial)
+tmp = [tmp; erp_trials.trial{t}(e,:)];
+end
 
-    end  % condition loop
+trials{e} = tmp;
 
-end  % file loop
+end
+
+%% ---------------- Timing ----------------
+[target_start_time] = ...
+target_start_times_inhibition(dataset_filename,cond,erp_trials);
+
+[~,base_filename,~] = fileparts(dataset_files(file_idx).name);
+
+%% ---------------- Save trials ----------------
+if cond == 3
+save(fullfile(trials_cong_folder,[base_filename '.mat']), ...
+     'trials','target_start_time')
+else
+save(fullfile(trials_incon_folder,[base_filename '.mat']), ...
+     'trials','target_start_time')
+end
+
+%% ---------------- ERP ----------------
+cfg = [];
+ga_erp = ft_timelockanalysis(cfg,erp_trials);
+
+%% ---------------- Save ERP ----------------
+if cond == 3
+save(fullfile(erp_cong_folder,[base_filename '.mat']),'ga_erp')
+else
+save(fullfile(erp_incon_folder,[base_filename '.mat']),'ga_erp')
+end
+
+end
+end
+
+disp('ERP pipeline finished')
