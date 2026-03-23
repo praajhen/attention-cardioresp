@@ -1,6 +1,6 @@
-function [cue_start_time, target_start_time] = start_times(dataset_filename, cond, erp_trials)
-% start_times
-% Extract cue and target onset times aligned to ERP trials
+function [target_start_time] = target_times(dataset_filename, cond, erp_trials)
+% target_times
+% Extract target onset times aligned to ERP trials
 %
 % cond:
 % 1 = no cue
@@ -13,8 +13,7 @@ event = ft_read_event(dataset_filename);
 
 event(arrayfun(@(x) isempty(x.value), event)) = [];
 
-%% ================= EXTRACT CUE / TARGET =================
-cue_samples    = [];
+%% ================= EXTRACT TARGET EVENTS =================
 target_samples = [];
 
 idx = 1;
@@ -27,12 +26,12 @@ trg3 = event(j+5).value;
 
 switch cond
 
-    case 1   % no cue
+    case 1
         cond_ok = strcmp(trg1,'8Bit 11') && ...
                  (strcmp(trg2,'8Bit 21') || strcmp(trg2,'8Bit 22')) && ...
                   strcmp(trg3,'8Bit 31');
 
-    otherwise  % double cue
+    otherwise
         cond_ok = strcmp(trg1,'8Bit 12') && ...
                  (strcmp(trg2,'8Bit 23') || strcmp(trg2,'8Bit 24')) && ...
                   strcmp(trg3,'8Bit 31');
@@ -40,39 +39,22 @@ switch cond
 end
 
 if cond_ok
-cue_samples(idx,1)    = event(j+1).sample;
 target_samples(idx,1) = event(j+3).sample;
 idx = idx + 1;
 end
 
 end
 
-%% ================= MATCH CUE TO ERP TRIALS =================
+%% ================= MATCH TO ERP TRIALS =================
 trial_starts = erp_trials.sampleinfo(:,1);
 
-cue_start_time = zeros(length(trial_starts),1);
+threshold = 220;
 
-threshold = 250;
+target_start_time = zeros(length(trial_starts),1);
 
 for t = 1:length(trial_starts)
 
-diffs = abs(cue_samples - trial_starts(t));
-valid = find(diffs <= threshold,1,'first');
-
-if ~isempty(valid)
-cue_start_time(t) = cue_samples(valid);
-end
-
-end
-
-%% ================= MATCH TARGET TO CUES =================
-target_start_time = zeros(length(cue_start_time),1);
-
-threshold = 520;
-
-for t = 1:length(cue_start_time)
-
-diffs = abs(target_samples - cue_start_time(t));
+diffs = abs(target_samples - trial_starts(t));
 valid = find(diffs <= threshold,1,'first');
 
 if ~isempty(valid)
