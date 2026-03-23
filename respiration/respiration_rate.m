@@ -1,60 +1,62 @@
-%% compute_respiration_rate.m
-% Estimate respiration rate from Resp channel and save to Excel
+%% respiration_rate.m
+% Estimate respiration rate from Resp channel
 % Author: praghajieeth raajhen santhana gopalan
 
 clear; clc;
-addpath('PATH_TO_YOUR_MATLAB_CODE_FOLDER');      % e.g. C:\...\AICRM (2023-24)\Matlab code
-addpath('PATH_TO_FIELDTRIP_FOLDER');             % e.g. C:\...\fieldtrip-20230427
-ft_defaults;
 
-data_folder   = 'PATH_TO_EDF_DATA_FOLDER';       % Folder containing your datasets
-dataset_files = dir(fullfile(data_folder, '*.edf'));  % List all .edf files in the folder
+%% ================= USER PATHS =================
+code_path      = 'PATH_TO_YOUR_MATLAB_CODE_FOLDER';
+fieldtrip_path = 'PATH_TO_FIELDTRIP_FOLDER';
+data_folder    = 'PATH_TO_EDF_DATA_FOLDER';
+output_file    = 'RespirationRates.xlsx';
 
-for file_idx = 50
+%% ================= SETUP =================
+addpath(code_path)
+addpath(fieldtrip_path)
+ft_defaults
 
-    dataset_filename = fullfile(data_folder, dataset_files(file_idx).name);
+dataset_files = dir(fullfile(data_folder,'*.edf'));
+num_subjects  = length(dataset_files);
 
-    cfg            = [];
-    % cfg.trialfun = 'mytrialfun';
-    cfg.dataset    = dataset_filename;
-    cfg.channel    = 'Resp';
-    cfg.bpfilter   = 'yes';           % Apply band-pass filter
-    cfg.bpfreq     = [0.1 0.5];       % Specify filter frequency range
-    cfg.bpfilttype = 'but';           % Filter type (Butterworth)
-    cfg.bpfiltord  = 2;               % Filter order
+respiration_rate_bpm = zeros(num_subjects,1);
+respiration_frequency = zeros(num_subjects,1);
 
-    Resp = ft_preprocessing(cfg);
+%% ================= LOOP SUBJECTS =================
+for file_idx = 1:num_subjects
 
-    % Given sampling frequency
-    sampling_frequency = 1000; % Hz
+dataset_filename = fullfile(data_folder,dataset_files(file_idx).name);
 
-    [rpeaks, locs] = findpeaks(Resp.trial{1,1});
+cfg = [];
+cfg.dataset    = dataset_filename;
+cfg.channel    = 'Resp';
+cfg.bpfilter   = 'yes';
+cfg.bpfreq     = [0.1 0.5];
+cfg.bpfilttype = 'but';
+cfg.bpfiltord  = 2;
 
-    % Calculate time intervals between consecutive R-peaks (in seconds)
-    time_intervals = diff(locs) / sampling_frequency;
+Resp = ft_preprocessing(cfg);
 
-    % Calculate average time interval (in seconds)
-    avg_time_interval = mean(time_intervals);
+resp = Resp.trial{1,1};
+fs   = Resp.fsample;
 
-    % Convert average time interval to breaths per minute (bpm)
-    respiration_rate_bpm(file_idx) = 60 / avg_time_interval;
+%% ================= PEAK DETECTION =================
+[~,locs] = findpeaks(resp);
 
-    % Convert average time interval to respiration frequency (Hz)
-    respiration_frequency(file_idx) = 1 / avg_time_interval;
+time_intervals = diff(locs) / fs;
+avg_interval   = mean(time_intervals);
 
-    % Extract the subject name from the file name (assuming the file name format is consistent)
-    [~, subject_name, ~] = fileparts(dataset_files(file_idx).name);
+respiration_rate_bpm(file_idx) = 60 / avg_interval;
+respiration_frequency(file_idx) = 1 / avg_interval;
 
-    % Create or append to an Excel file
-    excel_filename = 'RespirationRates.xlsx';
-    if exist(excel_filename, 'file') == 0
-        headers = {'Subject', 'Respiration Rate (bpm)'};
-        xlswrite(excel_filename, headers, 'Sheet1', 'A1');
-    end
-    
-    % small fix: write only this subject's rate, not the whole vector
-    data_to_write = {subject_name, respiration_rate_bpm(file_idx)};
-    range = ['A' num2str(file_idx + 1)]; % Start writing from the second row
-    xlswrite(excel_filename, data_to_write, 'Sheet1', range);
+[~,subject_name,~] = fileparts(dataset_files(file_idx).name);
+
+results{file_idx,1} = subject_name;
+results{file_idx,2} = respiration_rate_bpm(file_idx);
 
 end
+
+%% ================= SAVE =================
+headers = {'Subject','Respiration Rate (bpm)'};
+xlswrite(output_file,[headers; results])
+
+disp('Respiration rate calculation finished')
