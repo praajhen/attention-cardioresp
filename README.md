@@ -41,15 +41,12 @@ The pipeline synchronizes **EEG**, **ECG**, and **respiration** signals to extra
 
 # Key Results
 ## ERP attention effects (young vs older adults)
-![ERP attention](results/figures/ERP_attention task.jpg)
 ERP differences between no-cue and double-cue conditions (N1), and congruent vs incongruent targets (P3) in young and older adults.
 
 ## Cardiac and respiration phase modulation
-![Cardiac respiration](results/figures/ECG_Resp,RT.jpg)
 Attention-related effects are modulated by both cardiac cycle phase and respiration phase.
 
 ## Behavioral attention effects
-![Behavioral](results/figures/RT_attention task.jpg)
 Reaction time differences across Attention Network Task conditions for young and older adults.
 
 # Methods Summary
