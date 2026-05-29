@@ -2,7 +2,7 @@
 
 This repository contains MATLAB code for multimodal physiological signal processing used in the published study:
 
-**Puthusserypady S., Nokia M.S., Wikgren J., Waselius T., Tervaniemi M.**
+**Santhana Gopalan P.R., Hämäläinen, J., Penttonen, M., and Nokia M.S.**
 
 *"Impact of cardiac cycle and respiratory rhythm phase on visual attention in healthy young and older adults."*
 
@@ -108,7 +108,7 @@ Raw EDF recordings
 
 If you use this code, please cite:
 
-Puthusserypady S., Nokia M.S., Wikgren J., Waselius T., Tervaniemi M. (2026).
+Santhana Gopalan, P.R., Hämäläinen, J., Penttonen, M., and Nokia M.S., (2026).
 
 Impact of cardiac cycle and respiratory rhythm phase on visual attention in healthy young and older adults.
 
