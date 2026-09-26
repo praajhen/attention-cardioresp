@@ -44,7 +44,7 @@ C.win.P3 = [0.290 0.350];
 %% Physiological phase bins
 % Respiration: Hilbert phase at target onset, split at 0 rad.
 C.resp.edges  = [-3.14 0 3.14];
-C.resp.labels = {'expiration', 'inspiration'}; % bin 1 = -pi..0, bin 2 = 0..pi, as labelled in the paper.
+C.resp.labels = {'inspiration', 'expiration'}; % bin 1 = -pi..0, bin 2 = 0..pi, as labelled in the paper.
                                                % Verify with 04_physiology/s08_check_respiration_phase.m
 
 % Cardiac: time from preceding R-peak to target onset, per-participant edges
