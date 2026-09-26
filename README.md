@@ -4,7 +4,7 @@ MATLAB/FieldTrip code for:
 
 > Santhana Gopalan, P. R., Hämäläinen, J., Penttonen, M., & Nokia, M. S. (2026). Impact of cardiac cycle and respiratory rhythm phase on visual attention in healthy young and older adults. *Scientific Reports*, 16, 18096. https://doi.org/10.1038/s41598-026-47916-6
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975053.svg)](https://doi.org/10.5281/zenodo.22975053)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975053.svg)](https://doi.org/10.5281/zenodo.22975052)
 
 ## Overview
 
