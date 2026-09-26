@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the article and this software."
+title: "Analysis code for: Impact of cardiac cycle and respiratory rhythm phase on visual attention in healthy young and older adults"
+type: software
+version: 1.0.0
+license: MIT
+repository-code: "https://github.com/praajhen/attention-cardioresp"
+authors:
+  - family-names: Santhana Gopalan
+    given-names: Praghajieeth Raajhen
+    orcid: "https://orcid.org/0000-0003-4244-485X"
+    affiliation: University of Jyväskylä
+keywords:
+  - EEG
+  - ERP
+  - cardiac cycle
+  - respiration
+  - attention
+  - Attention Network Test
+  - ageing
+  - FieldTrip
+  - MATLAB
+references:
+  - type: article
+    title: "Impact of cardiac cycle and respiratory rhythm phase on visual attention in healthy young and older adults"
+    authors:
+      - family-names: Santhana Gopalan
+        given-names: Praghajieeth Raajhen
+      - family-names: Hämäläinen
+        given-names: Jarmo
+      - family-names: Penttonen
+        given-names: Markku
+      - family-names: Nokia
+        given-names: Miriam S.
+    journal: Scientific Reports
+    volume: 16
+    start: 18096
+    year: 2026
+    doi: 10.1038/s41598-026-47916-6
